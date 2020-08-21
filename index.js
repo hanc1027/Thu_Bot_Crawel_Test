@@ -79,8 +79,8 @@ function activity_query() {
         if (error || !body) {
             return
         }
-
         const $ = cheerio.load(body); // 載入 body
+/*
         const breadcrumb = $(".breadcrumb li");
 
         // 現在進行的活動
@@ -91,8 +91,23 @@ function activity_query() {
         going_event.href = breadcrumb[1].children[0].attribs.href
         going_event.title = breadcrumb[1].children[0].children[0].data
 
+        // console.log(going_event)
+        //*/
 
-        const eventListComponents = $(".event-list .col-sm-12")
+        /*
+        const categoryComponents = $(".nav--filter li a");
+        let event_categories = []
+        for (let index = 2; index < 7; index++) {
+            event_categories.push({
+                title:categoryComponents[index].children[0].data,
+                url:categoryComponents[index].attribs.href
+            })
+        }
+        console.log(event_categories)
+        //*/
+
+        //*
+        const eventListComponents = $(".event-list .row .col-sm-12")
         let eventsList = []
         let event = {
             title: "",
@@ -102,11 +117,14 @@ function activity_query() {
             content: ""
         }
 
-        for(let index = 0;index<eventListComponents.length;index++) {
+console.log(eventListComponents[1].children[0].next.children[0].attribs.href)    
+
+console.log(eventListComponents[1].children[0].next.children[0].children[0].data)
+        for (let index = 0; index < eventListComponents.length; index++) {
 
             event.url = baseurl + eventListComponents[index].children[0].next.children[0].attribs.href
 
-            event.title = eventListComponents[index].children[0].next.children[0].children[0].data 
+            event.title = eventListComponents[index].children[0].next.children[0].children[0].data
 
             event.date = eventListComponents[index].children[2].next.children[0].data
 
@@ -116,8 +134,19 @@ function activity_query() {
 
             eventsList.push(event)
         }
-console.log(eventsList)
+        console.log(eventsList)
+        //*/
 
+        const pagesComponents = $(".pagination li a")
+        let pages = []
+
+        for (let index = 0; index < pagesComponents.length - 1; index++) {
+            pages.push({
+                url: pagesComponents[index].attribs.href,
+                index: pagesComponents[index].children[0].data
+            })
+        }
+        // console.log(pages)
     })
 }
 
@@ -129,3 +158,19 @@ activity_query()
 // 每半小時爬一次資料
 // setInterval(bus_search, 30 * 60 * 1000);
 
+function crawl_Data(source_url,dom_param){
+    request({
+        url: source_url,
+        method: "GET"
+    }, (error, response, body) => {
+        if (error || !body) {
+            return
+        }
+
+        const $ = cheerio.load(body); // 載入 body
+        const breadcrumb = $(dom_param);
+        console.log(breadcrumb)
+    })
+}
+
+// crawl_Data('https://tevent.thu.edu.tw/tEvent_front/index.php','.pagination li a')
