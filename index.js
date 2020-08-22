@@ -1,7 +1,6 @@
 // 引入第三方套件
 const request = require('request')
 const cheerio = require('cheerio')
-const { title } = require('process')
 
 let newsWebList = [
 {title: "東大新聞",url: "https://www.thu.edu.tw/web/news/news.php?cid=8"},
