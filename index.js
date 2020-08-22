@@ -12,7 +12,7 @@ let newsWebList = [
 
 
 function getThuNews() {
-
+    let haveNews = false
     newsWebList.forEach((value, index) => {
         let news = []
         request({
@@ -30,7 +30,6 @@ function getThuNews() {
             const newsMainPoint = $(".row .clients-page .col-md-7 ul")
             const newsUrl = $(".row .clients-page")
 
-            let haveNews = false
             for (let i = 0; i < 2; i++) {
                 let aNew = {
                     title: "",
@@ -57,11 +56,9 @@ function getThuNews() {
                     haveNews = true
                 }
             }
-            if (!haveNews) console.log("今天沒有新聞")
         })
     })
-
-
+    if (!haveNews) console.log("今天沒有新聞")
 }
 
 function isTodayNews(newDate) {
@@ -73,4 +70,14 @@ function isTodayNews(newDate) {
     return date[3] == `${today_year}-${today_month}-${today_date}`
 }
 
-getThuNews()
+
+setInterval(()=>{routineSendNews()},1000);
+function routineSendNews(){
+    var hours=new Date().getHours();
+    var minute=new Date().getMinutes();
+    var seconds=new Date().getSeconds();
+    if(hours==10 && minute==0 && seconds==0){
+        // 每天早上十點會去抓學校的新聞
+        getThuNews()
+    }
+}
