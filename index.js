@@ -1,176 +1,76 @@
+// 引入第三方套件
 const request = require('request')
 const cheerio = require('cheerio')
+const { title } = require('process')
 
-const bus_search = () => {
-    request({
-        url: "http://bus.service.thu.edu.tw",
-        method: "GET"
-    }, (error, response, body) => {
-        if (error || !body) {
-            return
-        }
-
-        const $ = cheerio.load(body); // 載入 body
-        const panelHeading = $(".panel-heading").children();
-        const panelBody = $(".panel-body").children()
-
-        let up_route = {
-            title: "",
-            sopts: [],
-            url: ""
-        }, down_route = {
-            title: "",
-            sopts: [],
-            url: ""
-        }
-        // 上行
-        up_route.title = panelHeading[0].prev.data + panelHeading[0].next.data
-
-        for (var i = 1; i < panelBody[0].children.length - 1; i++) {
-            up_route.sopts.push(panelBody[0].children[i].children[0].data);
-        }
-        up_route.url = panelBody[1].attribs.href
-
-        //下行
-        down_route.title = panelHeading[1].prev.data + panelHeading[1].next.data
-        for (var i = 1; i < panelBody[2].children.length - 1; i++) {
-            down_route.sopts.push(panelBody[2].children[i].children[0].data);
-        }
-        down_route.url = panelBody[3].attribs.href
-
-        console.log(up_route)
-        console.log(down_route)
-
-    });
-};
+let newsWebList = [
+{title: "東大新聞",url: "https://www.thu.edu.tw/web/news/news.php?cid=8"},
+{ title: "榮譽榜", url: "https://www.thu.edu.tw/web/news/news.php?cid=9" },
+{ title: "新聞影片", url: "https://www.thu.edu.tw/web/news/news.php?cid=18" },
+    // {title:"東海人季刊",url:"http://cdc.thu.edu.tw/quarterly/web//news.php",
+]
 
 
+function getThuNews() {
 
-function time_query() {
-    request({
-        url: "http://bus.service.thu.edu.tw/timetable/3/zh_TW",
-        method: "GET"
-    }, (error, response, body) => {
-        if (error || !body) {
-            return
-        }
+    newsWebList.forEach((value, index) => {
+        let news = []
+        request({
+            url: value.url,
+            method: "GET"
+        }, (error, response, body) => {
+            if (error || !body) {
+                return
+            }
 
-        const $ = cheerio.load(body); // 載入 body
-        const panelTitle = $(".table-striped tr");
-        let bus_schedule = ['#編號\t發車時間\t\t#編號\t發車時間']
-        for (let i = 1; i < panelTitle.length; i++) { // 走訪 tr
-            const table_td = panelTitle.eq(i).find('td'); // 擷取每個欄位(td)
-            const no1 = table_td.eq(0).text();
-            const time1 = table_td.eq(1).text();
-            const no2 = table_td.eq(2).text();
-            const time2 = table_td.eq(3).text();
-            bus_schedule.push(`${no1}\t${time1}\t\t${no2}\t${time2}`)
-        }
-        console.log(bus_schedule)
+            const $ = cheerio.load(body); // 載入 body
+            const newTitle = $(".row .clients-page .col-md-7 span")
+            const newsDate = $(".row .clients-page .col-md-7 ul li .fa-calendar")
+            const newsUnit = $(".row .clients-page .col-md-7 ul li .fa-briefcase")
+            const newsMainPoint = $(".row .clients-page .col-md-7 ul")
+            const newsUrl = $(".row .clients-page")
+
+            let haveNews = false
+            for (let i = 0; i < 2; i++) {
+                let aNew = {
+                    title: "",
+                    date: "",
+                    unit: "",
+                    main_point: "",
+                    url: ""
+                }
+
+                if (isTodayNews(newsDate[i].next.data)) {
+                    let date = newsDate[i].next.data.split("\t")
+                    aNew.date = date[6]
+
+                    let main_point = newsMainPoint[i].next.data.split(" ")
+                    let main_point2 = newsMainPoint[i].next.data.split("\n")
+                    if(value.title == "新聞影片")aNew.main_point = main_point2[1]
+                    else aNew.main_point = main_point[3]
+
+                    aNew.unit = newsUnit[i].next.data
+                    aNew.title = newTitle[i].children[0].data
+                    aNew.url = newsUrl[i].parent.attribs.href
+
+                    news.push(aNew)
+                    haveNews = true
+                }
+            }
+            if (!haveNews) console.log("今天沒有新聞")
+        })
     })
+
+
 }
 
-function activity_query() {
-    let baseurl = "https://tevent.thu.edu.tw/tEvent_front/"
-    request({
-        url: `${baseurl}index.php`,
-        method: "GET"
-    }, (error, response, body) => {
-        if (error || !body) {
-            return
-        }
-        const $ = cheerio.load(body); // 載入 body
-/*
-        const breadcrumb = $(".breadcrumb li");
-
-        // 現在進行的活動
-        let going_event = {
-            title: "",
-            href: ""
-        }
-        going_event.href = breadcrumb[1].children[0].attribs.href
-        going_event.title = breadcrumb[1].children[0].children[0].data
-
-        // console.log(going_event)
-        //*/
-
-        /*
-        const categoryComponents = $(".nav--filter li a");
-        let event_categories = []
-        for (let index = 2; index < 7; index++) {
-            event_categories.push({
-                title:categoryComponents[index].children[0].data,
-                url:categoryComponents[index].attribs.href
-            })
-        }
-        console.log(event_categories)
-        //*/
-
-        //*
-        const eventListComponents = $(".event-list .row .col-sm-12")
-        let eventsList = []
-        let event = {
-            title: "",
-            date: "",
-            url: "",
-            main_point: "",
-            content: ""
-        }
-
-console.log(eventListComponents[1].children[0].next.children[0].attribs.href)    
-
-console.log(eventListComponents[1].children[0].next.children[0].children[0].data)
-        for (let index = 0; index < eventListComponents.length; index++) {
-
-            event.url = baseurl + eventListComponents[index].children[0].next.children[0].attribs.href
-
-            event.title = eventListComponents[index].children[0].next.children[0].children[0].data
-
-            event.date = eventListComponents[index].children[2].next.children[0].data
-
-            event.content = eventListComponents[index].children[5].children[0].attribs.title
-
-            event.main_point = event.content.substr(0, 49) + '......'
-
-            eventsList.push(event)
-        }
-        console.log(eventsList)
-        //*/
-
-        const pagesComponents = $(".pagination li a")
-        let pages = []
-
-        for (let index = 0; index < pagesComponents.length - 1; index++) {
-            pages.push({
-                url: pagesComponents[index].attribs.href,
-                index: pagesComponents[index].children[0].data
-            })
-        }
-        // console.log(pages)
-    })
+function isTodayNews(newDate) {
+    // 確認爬到的是今天的新聞，就不再爬了
+    let date = newDate.split(" ")
+    let today = new Date()
+    let today_year = today.getFullYear(), today_month = today.getMonth() + 1, today_date = today.getDate()
+    if (today_month < 10) today_month = `0${today_month}`
+    return date[3] == `${today_year}-${today_month}-${today_date}`
 }
 
-// bus_search();
-// time_query();
-activity_query()
-
-
-// 每半小時爬一次資料
-// setInterval(bus_search, 30 * 60 * 1000);
-
-function crawl_Data(source_url,dom_param){
-    request({
-        url: source_url,
-        method: "GET"
-    }, (error, response, body) => {
-        if (error || !body) {
-            return
-        }
-
-        const $ = cheerio.load(body); // 載入 body
-        const breadcrumb = $(dom_param);
-        console.log(breadcrumb)
-    })
-}
-
-// crawl_Data('https://tevent.thu.edu.tw/tEvent_front/index.php','.pagination li a')
+getThuNews()
